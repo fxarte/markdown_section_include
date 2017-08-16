@@ -20,6 +20,7 @@ if __name__=='__main__':
 
 [[include:Architecture### Entities relationships]]
 '''
+  built=[]
   for include in text.split('\n'):
     include = include.strip()
     if not include or include.startswith('#'):
@@ -28,35 +29,40 @@ if __name__=='__main__':
     try:
       file = include[0:include.index('#')]
       section = include[include.index('#'):]
-      next_section = section[:section.index(' ')]+' '
+      section_end=section.index(' ')
+      copy_section=False
     except:
+      section_end=-1
       file = include
       section=None
-      next_section=None
-    copy_section=False if section else True
-    built=[]
+      copy_section=True
     DIRBASE=''
     EXT='.md'
     with open(os.path.join(DIRBASE, file+EXT)) as f:
       page_broken=False
-      if copy_section:
+      if copy_section and section is not None:
         built.append("# {}".format(file))
+        # print("# {}".format(file))
       for line in f:
         line=line.strip('\n')
-        if next_section and copy_section and line.startswith(next_section):
-          copy_section=False
-          # Print page break
-          built.append('<div class="page">&nbsp;</div>')
-          page_broken=True
-        elif copy_section:
-          built.append(line)
-        elif section and line.startswith(section):
-          built.append('\n')
-          built.append("# {}".format(file))
-          copy_section=True
-          built.append(line)
+
+        if copy_section:
+          if line.startswith('#') and line.index(' ')<=section_end:
+            copy_section=False
+            built.append('<div class="page">&nbsp;</div>')
+            page_broken=True
+          else:
+            built.append(line)
+        elif section is not None:
+          if line.startswith(section):
+            built.append('\n')
+            built.append("# {}".format(file))
+            copy_section=True
+            built.append(line)
+            
       copy_section=False
       if not page_broken:
         built.append('<div class="page">&nbsp;</div>')
         built.append('\n')
-    print("\n".join(built))
+  print('# Title')
+  print("\n".join(built).strip())
